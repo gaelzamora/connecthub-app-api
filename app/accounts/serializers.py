@@ -8,9 +8,11 @@ from django.contrib.auth import (
 )
 from django.utils.translation import gettext as _
 
-from core.models import Tag
+from core.models import Tag, WorkExperience, Project, Technologie
 
 from rest_framework import serializers
+
+from rest_framework.authtoken.models import Token
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -22,27 +24,65 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class WorkExperienceSerializer(serializers.ModelSerializer):
+    """Serializer for work experiences."""
+
+    class Meta:
+        model = WorkExperience
+        fields = ['id', 'business', 'time', 'current_job', 'position', 'description']
+        read_only_fields = ['id']
+
+class TechnologieSerializer(serializers.ModelSerializer):
+    """Serializer for technologies."""
+
+    class Meta:
+        model = Technologie
+        fields = ['id', 'name']
+        read_only_fields = ['id']
+
+class ProjectSerializer(serializers.ModelSerializer):
+    """Serializer for projects"""
+    technologies = TechnologieSerializer(many=True, source='project_technologies')
+
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'technologies', 'year']
+        read_only_fields = ['id']
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object."""
-    tags = TagSerializer(many=True, required=False)
+    tags = TagSerializer(many=True, source='user_tags')
+    work_experiences = WorkExperienceSerializer(many=True, source='user_experience')
+    projects = ProjectSerializer(many=True, source='user_project')
 
     class Meta:
         model = get_user_model()
-        fields = ['email', 'password', 'first_name', 'last_name', 'tags']
+        fields = ['email', 'password', 'first_name', 'last_name', 'tags', 'work_experiences', 'projects']
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
     def create(self, validated_data):
         """Create and return a user with encripted password."""
-        return get_user_model().objects.create_user(**validated_data)
-    
+        tags = validated_data.pop('user_tags', [])
+        work_experiences = validated_data.pop('user_experience', [])
+        projects = validated_data.pop('user_project', [])
+        user = get_user_model().objects.create_user(**validated_data)
+        self._get_or_create_tags(tags, user)
+        self._get_or_create_experiences(work_experiences, user)
+        return user
+
     def update(self, instance, validated_data):
         """Update and return user."""
+        tags = validated_data.pop('user_tags', None)
+        work_experiences = validated_data.pop('user_experience', None)
         password = validated_data.pop('password', None)
         user = super().update(instance, validated_data)
 
         if password:
             user.set_password(password)
             user.save()
+
+        if tags: self._get_or_create_tags(tags, user)
+        if work_experiences: self._get_or_create_experiences(work_experiences, user)
 
         return user
 
@@ -55,6 +95,23 @@ class UserSerializer(serializers.ModelSerializer):
             )
             user.tags.add(tag_obj)
 
+    def _get_or_create_experiences(self, experiences, user):
+        auth_user = self.context['request'].user
+        for experience in experiences:
+            experience_obj, created = WorkExperience.objects.get_or_create(
+                user=auth_user,
+                **experience,
+            )
+            user.tags.add(experience_obj)
+
+    def _get_or_create_projects(self, projects, user):
+        auth_user = self.context['request'].user
+        for project in projects:
+            project_obj, created = WorkExperience.objects.get_or_create(
+                user=auth_user,
+                **project,
+            )
+            user.tags.add(project_obj)
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""

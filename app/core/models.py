@@ -39,6 +39,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     tags = models.ManyToManyField('Tag', related_name='core_user')
+    work_experiences = models.ManyToManyField('WorkExperience', related_name='core_experience')
+    projects = models.ManyToManyField('Project', related_name='core_project')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -63,4 +65,37 @@ class Tag(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='user_tags'
+    )
+    
+class WorkExperience(models.Model):
+    """Work experience for each user."""
+    business = models.CharField(max_length=255)
+    year = models.IntegerField(null=True)
+    time = models.CharField(max_length=255)
+    current_job = models.BooleanField(default=False)
+    position = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_experience'
+    )
+
+class Project(models.Model):
+    """Projects for each user."""
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    technologies = models.ManyToManyField('Technologie', related_name='project_technologie', blank=True)
+    year = models.IntegerField(null=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_project'
+    )
+
+class Technologie(models.Model):
+    name = models.CharField(max_length=255)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
     )
