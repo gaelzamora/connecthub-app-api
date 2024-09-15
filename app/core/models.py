@@ -85,7 +85,7 @@ class Project(models.Model):
     """Projects for each user."""
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
-    technologies = models.ManyToManyField('Technologie', related_name='project_technologie', blank=True)
+    technologies = models.ManyToManyField('Technologie', related_name='project_technologie')
     year = models.IntegerField(null=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

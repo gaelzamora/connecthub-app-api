@@ -5,7 +5,7 @@ from rest_framework import generics, authentication, permissions, viewsets, mixi
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from . import serializers
 
 from accounts.serializers import (
@@ -20,6 +20,7 @@ from core.models import Tag, WorkExperience, Project, Technologie
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
     serializer_class = UserSerializer
+    permission_classes = [AllowAny]
 
 class CreateTokenView(ObtainAuthToken):
     """Create a new auth token for user."""

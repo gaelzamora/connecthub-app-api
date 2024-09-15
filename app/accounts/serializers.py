@@ -42,18 +42,33 @@ class TechnologieSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     """Serializer for projects"""
-    technologies = TechnologieSerializer(many=True, source='project_technologies')
+    technologies = TechnologieSerializer(many=True, required=False)
 
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'technologies', 'year']
         read_only_fields = ['id']
 
+    def create(self, validated_data):
+        """Create and return a project."""
+        technologies = validated_data.pop('project_technologies', [])
+        project = Project.objects.create(**validated_data)
+        self._get_or_create_technologies(technologies, project)
+        return project
+
+    def _get_or_create_technologies(self, technologies_data, project):
+        """Helper method to create or get technologies and assign them to the project."""
+        technologie_objects = []
+        for technologie_data in technologies_data:
+            technologie_obj, created = Technologie.objects.get_or_create(**technologie_data)
+            technologie_objects.append(technologie_obj)
+        project.technologies.set(technologie_objects)
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object."""
-    tags = TagSerializer(many=True, source='user_tags')
-    work_experiences = WorkExperienceSerializer(many=True, source='user_experience')
-    projects = ProjectSerializer(many=True, source='user_project')
+    tags = TagSerializer(many=True, source='user_tags', required=False)
+    work_experiences = WorkExperienceSerializer(many=True, source='user_experience', required=False)
+    projects = ProjectSerializer(many=True, source='user_project', required=False)
 
     class Meta:
         model = get_user_model()
@@ -68,6 +83,7 @@ class UserSerializer(serializers.ModelSerializer):
         user = get_user_model().objects.create_user(**validated_data)
         self._get_or_create_tags(tags, user)
         self._get_or_create_experiences(work_experiences, user)
+        self._get_or_create_projects(projects, user)
         return user
 
     def update(self, instance, validated_data):
@@ -102,7 +118,7 @@ class UserSerializer(serializers.ModelSerializer):
                 user=auth_user,
                 **experience,
             )
-            user.tags.add(experience_obj)
+            user.work_experiences.add(experience_obj)
 
     def _get_or_create_projects(self, projects, user):
         auth_user = self.context['request'].user
@@ -111,7 +127,7 @@ class UserSerializer(serializers.ModelSerializer):
                 user=auth_user,
                 **project,
             )
-            user.tags.add(project_obj)
+            user.projects.add(project_obj)
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""
