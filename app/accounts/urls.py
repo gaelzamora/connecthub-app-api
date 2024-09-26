@@ -19,5 +19,7 @@ urlpatterns = [
     path('create/', views.CreateUserView.as_view(), name='create'),
     path('token/', views.CreateTokenView.as_view(), name='token'),
     path('me/', views.ManageUserView.as_view(), name='me'),
+    path('<int:pk>/follow/', views.FollowUserView.as_view(), name='follow_user'),
+    path('<int:pk>/unfollow/', views.UnfollowUserView.as_view(), name='unfollow_user'),
     path('', include(router.urls)),
 ]

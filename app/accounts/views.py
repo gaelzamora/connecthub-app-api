@@ -1,42 +1,76 @@
 """
 Views for the user API.
 """
-from rest_framework import generics, authentication, permissions, viewsets, mixins
+from rest_framework import status, generics, authentication, permissions, viewsets, mixins
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from . import serializers
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from accounts.serializers import (
-    UserSerializer,
-    AuthTokenSerializer,
-    ProjectSerializer,
-    TechnologieSerializer
-)
+from accounts import serializers
 
-from core.models import Tag, WorkExperience, Project, Technologie
+from core.models import Tag, WorkExperience, Project, Technologie, User
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
-    serializer_class = UserSerializer
+    serializer_class = serializers.UserSerializer
     permission_classes = [AllowAny]
 
 class CreateTokenView(ObtainAuthToken):
     """Create a new auth token for user."""
-    serializer_class = AuthTokenSerializer
+    serializer_class = serializers.AuthTokenSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """Manage the authentication user."""
-    serializer_class = UserSerializer
+    serializer_class = serializers.UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
-    
+
+class FollowUserView(APIView):
+    """Allow the authenticated user to follow another user"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
+        """Handle follow action"""
+        try:
+            user_to_follow = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user_to_follow == request.user:
+            return Response({"detail": "You can't follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.follows.add(user_to_follow)
+        return Response({"detail": f"Now you follow {user_to_follow.get_full_name()}."}, status=status.HTTP_200_OK)
+
+
+class UnfollowUserView(APIView):
+    """Allow the authenticated user to unfollow another user"""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
+        """Handle unfollow action"""
+        try:
+            user_to_unfollow = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user_to_unfollow == request.user:
+            return Response({"detail": "You can't unfollow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.follows.remove(user_to_unfollow)
+        return Response({"detail": f"Now you unfollow {user_to_unfollow.get_full_name()}."}, status=status.HTTP_200_OK)
+
 class TagViewSet(
         mixins.CreateModelMixin, 
         mixins.DestroyModelMixin, 
@@ -80,11 +114,7 @@ class WorkExperienceViewSet(
         serializer.save(user=self.request.user)
 
 class ProjectViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
+    viewsets.ModelViewSet
 ):
     """Manage projects in the database."""
     serializer_class = serializers.ProjectSerializer
@@ -99,6 +129,13 @@ class ProjectViewSet(
     def perform_create(self, serializer):
         """Create a new project it to the authenticated user."""
         serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'list':
+            return serializers.ProjectSerializer
+        
+        return self.serializer_class
 
 class TechnologieViewSet(
     mixins.CreateModelMixin,
@@ -116,3 +153,6 @@ class TechnologieViewSet(
     def get_queryset(self):
         """Filter queryset to authenticated user."""
         return self.queryset.filter(user=self.request.user).order_by('-name')
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

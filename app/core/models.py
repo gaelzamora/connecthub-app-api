@@ -9,6 +9,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -41,16 +42,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     tags = models.ManyToManyField('Tag', related_name='core_user')
     work_experiences = models.ManyToManyField('WorkExperience', related_name='core_experience')
     projects = models.ManyToManyField('Project', related_name='core_project')
+    follows = models.ManyToManyField('self', symmetrical=False , related_name='followers', blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     def get_full_name(self):
-        return self.first_name + self.last_name
+        return self.first_name + ' ' + self.last_name
     
     def get_short_name(self):
         return self.first_name
@@ -85,7 +87,7 @@ class Project(models.Model):
     """Projects for each user."""
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
-    technologies = models.ManyToManyField('Technologie', related_name='project_technologie')
+    technologies = models.ManyToManyField('Technologie', related_name='technologies')
     year = models.IntegerField(null=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -95,7 +97,34 @@ class Project(models.Model):
 
 class Technologie(models.Model):
     name = models.CharField(max_length=255)
-    project = models.ForeignKey(
-        Project,
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        null=True,
+        related_name='user_technologie'
     )
+
+    def __str__(self):
+        return self.names
+    
+
+# Models for posts
+
+class Post(models.Model):
+    content = models.CharField(max_length=255)
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_post'
+    )
+    posted = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='posts',
+        blank=True
+    )
+    like_count = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f'User {self.user.get_full_name()} - [{self.content}]'
