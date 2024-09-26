@@ -107,7 +107,6 @@ class Technologie(models.Model):
     def __str__(self):
         return self.names
     
-
 # Models for posts
 
 class Post(models.Model):
@@ -126,5 +125,5 @@ class Post(models.Model):
     )
     like_count = models.PositiveIntegerField(default=0)
 
-    def __str__(self):
+    def get_content(self):
         return f'User {self.user.get_full_name()} - [{self.content}]'
