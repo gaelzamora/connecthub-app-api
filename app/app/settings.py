@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'channels',
     'accounts',
     'core',
-    'posts'
+    'posts',
+    'groups'
 ]
 
 MIDDLEWARE = [

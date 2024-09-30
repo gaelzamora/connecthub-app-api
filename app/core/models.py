@@ -63,11 +63,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Tag(models.Model):
     """Tag for filtering users."""
     name = models.CharField(max_length=255)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='user_tags'
-    )
+
+    def get_name(self):
+        return self.name
     
 class WorkExperience(models.Model):
     """Work experience for each user."""
@@ -77,11 +75,6 @@ class WorkExperience(models.Model):
     current_job = models.BooleanField(default=False)
     position = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='user_experience'
-    )
 
 class Project(models.Model):
     """Projects for each user."""
@@ -89,11 +82,6 @@ class Project(models.Model):
     description = models.CharField(max_length=255)
     technologies = models.ManyToManyField('Technologie', related_name='technologies')
     year = models.IntegerField(null=True)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='user_project'
-    )
 
 class Technologie(models.Model):
     name = models.CharField(max_length=255)
@@ -109,15 +97,37 @@ class Technologie(models.Model):
     
 # Models for posts
 
+class Group(models.Model):
+    name = models.CharField(max_length=255)
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_group'
+    )
+    admins = models.ManyToManyField('User', related_name='admin_groups')
+    users = models.ManyToManyField('User', related_name='member_groups')
+    tags = models.ManyToManyField('Tag', related_name='tag_groups')
+    created = models.DateTimeField(auto_now_add=True, null=True)
+
+    def get_name(self):
+        return self.name
+
 class Post(models.Model):
-    content = models.CharField(max_length=255)
-    autor = models.ForeignKey(
+    content = models.TextField(max_length=255)
+    author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='user_post'
     )
+    group = models.ForeignKey(
+        'Group',
+        on_delete=models.CASCADE,
+        related_name='posts',
+        null=True
+    )
     posted = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    hashtags = models.ManyToManyField('HashTag', related_name='posts')
     likes = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name='posts',
@@ -126,4 +136,15 @@ class Post(models.Model):
     like_count = models.PositiveIntegerField(default=0)
 
     def get_content(self):
-        return f'User {self.user.get_full_name()} - [{self.content}]'
+        return f'User {self.autor.get_full_name()} - [{self.content}]'
+    
+class Hashtag(models.Model):
+    name = models.CharField(max_length=50, default='fyp')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_hashtag'
+    )
+
+    def get_name_message(self):
+        return f'You have created a new hashtag {self.name}'

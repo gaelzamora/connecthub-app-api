@@ -9,10 +9,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from . import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Q
 
 from accounts import serializers
 
 from core.models import Tag, WorkExperience, Project, Technologie, User
+from .serializers import UserSerializer
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
@@ -156,3 +158,19 @@ class TechnologieViewSet(
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class SearchUserViewSet(APIView):
+    """Allow the authenticated user can search to user."""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get('query')
+        if query is None:
+            query = ''
+
+        user = User.objects.filter(Q(first_name__icontains=query) | Q(last_name__icontains=query))
+
+        serializer = UserSerializer(user, many=True)
+
+        return Response({'users': serializer.data})

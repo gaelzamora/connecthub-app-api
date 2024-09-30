@@ -21,5 +21,6 @@ urlpatterns = [
     path('me/', views.ManageUserView.as_view(), name='me'),
     path('<int:pk>/follow/', views.FollowUserView.as_view(), name='follow_user'),
     path('<int:pk>/unfollow/', views.UnfollowUserView.as_view(), name='unfollow_user'),
+    path('search_user/', views.SearchUserViewSet.as_view(), name='search_user'),
     path('', include(router.urls)),
 ]
