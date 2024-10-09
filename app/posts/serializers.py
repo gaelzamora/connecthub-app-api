@@ -16,11 +16,22 @@ class HashTagSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for posts."""
     hashtags = HashTagSerializer(many=True, required=False)
+    like_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'group', 'author', 'content', 'posted', 'updated', 'likes', 'like_count', 'hashtags']
+        fields = ['id', 'group', 'author', 'content', 
+                  'posted', 'updated', 'likes', 'like_count', 
+                  'is_liked', 'hashtags']
         read_only_fields = ['id', 'author']
+
+    def get_like_count(self, obj):
+        return len(obj.likes.all())
+    
+    def get_is_liked(self, obj):
+        user = self.context['request'].user
+        return True if user in obj.likes.all() else False
 
     def create(self, validated_data):
         """Create and return post with all hashtags created."""

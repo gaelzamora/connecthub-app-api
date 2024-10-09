@@ -154,6 +154,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_followers_count(self, obj):
         return obj.followers.count()
+    
+class UserImageSerializer(serializers.ModelSerializer):
+    """Serializer for uploading images to User"""
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['image']
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""

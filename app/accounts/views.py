@@ -10,6 +10,7 @@ from . import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
+from rest_framework.decorators import action
 
 from accounts import serializers
 
@@ -35,6 +36,39 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
+    
+class UploadImageUser(viewsets.ModelViewSet):
+    """Upload image to unique user."""
+    serializer_class = serializers.UserSerializer
+    queryset = User.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self, request):
+        """Retrieve user information for authenticated user."""    
+        return self.queryset.filter(pk=request.user.pk)
+    
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'upload_image':
+            return serializers.UserImageSerializer
+        
+        return self.serializer_class
+    
+
+    @action(methods=['POST'], detail=True, url_path='upload-image')
+    def upload_image(self, request):
+        """Upload an image to user."""
+        user = request.user
+        serializer = self.get_serializer(user, data=request.data)
+
+        print(serializer)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class FollowUserView(APIView):
     """Allow the authenticated user to follow another user"""

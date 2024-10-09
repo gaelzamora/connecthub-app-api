@@ -3,7 +3,7 @@ URL mapping for the user API.
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import TagViewSet, WorkExperienceViewSet, ProjectViewSet, TechnologieViewSet
+from .views import TagViewSet, WorkExperienceViewSet, ProjectViewSet, TechnologieViewSet, UploadImageUser
 
 from . import views
 
@@ -12,6 +12,7 @@ router.register('tags', TagViewSet)
 router.register('work_experience', WorkExperienceViewSet)
 router.register('project',  ProjectViewSet)
 router.register('technologie', TechnologieViewSet)
+router.register('upload_image', UploadImageUser)
 
 app_name = 'accounts'
 

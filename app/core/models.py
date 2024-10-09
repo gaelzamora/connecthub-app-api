@@ -1,6 +1,8 @@
 """
 Database models
 """
+import uuid
+import os
 
 from django.conf import settings
 from django.db import models
@@ -11,6 +13,12 @@ from django.contrib.auth.models import (
 )
 from django.utils import timezone
 
+def user_image_file_path(instance, filename):
+    """Generate file path for new user image."""
+    ext = os.path.split(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'user', filename)
 
 class UserManager(BaseUserManager):
     """Manager for users."""
@@ -40,6 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     tags = models.ManyToManyField('Tag', related_name='core_user')
+    image = models.ImageField(null=True, upload_to=user_image_file_path)
     work_experiences = models.ManyToManyField('WorkExperience', related_name='core_experience')
     projects = models.ManyToManyField('Project', related_name='core_project')
     follows = models.ManyToManyField('self', symmetrical=False , related_name='followers', blank=True)
@@ -133,7 +142,6 @@ class Post(models.Model):
         related_name='posts',
         blank=True
     )
-    like_count = models.PositiveIntegerField(default=0)
 
     def get_content(self):
         return f'User {self.autor.get_full_name()} - [{self.content}]'

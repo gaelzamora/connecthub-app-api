@@ -42,13 +42,9 @@ class LikeActionView(APIView):
         
         if post.likes.filter(id=request.user.pk).exists():
             post.likes.remove(request.user)
-            if post.like_count > 0:
-                post.like_count -= 1
-            post.save()
             return Response({"detail": f"Now you don't like this post {post.content}"})
 
         post.likes.add(request.user)
-        post.like_count += 1
         post.save()
         return Response({"detail": f"Now, you like this post {post.content}"})
     
