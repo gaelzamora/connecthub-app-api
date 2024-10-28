@@ -51,18 +51,21 @@ class UploadImageUser(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Return the serializer class for request."""
         if self.action == 'upload_image':
+            print("Entreeeeeeee")
             return serializers.UserImageSerializer
         
         return self.serializer_class
     
 
-    @action(methods=['POST'], detail=True, url_path='upload-image')
+    @action(methods=['POST'], detail=True, url_path='upload_image')
     def upload_image(self, request):
         """Upload an image to user."""
+        print(request.user)
         user = request.user
         serializer = self.get_serializer(user, data=request.data)
 
         print(serializer)
+        print("Holaaaaaaaaaaaaaaaa")
 
         if serializer.is_valid():
             serializer.save()

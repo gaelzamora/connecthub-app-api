@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'core',
     'posts',
     'groups',
-    'chat'
+    'chat',
+    'notifications'
 ]
 
 MIDDLEWARE = [
@@ -77,10 +78,19 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'app.wsgi.application'
-
+ASGI_APPLICATION = 'app.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('redis-11575.c266.us-east-1-3.ec2.redns.redis-cloud.com', 11575)],
+        }
+    }
+}
 
 DATABASES = {
     'default': {
@@ -130,7 +140,7 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/h   owto/static-files/
 
 STATIC_URL = '/static/static/'
 MEDIA_URL = '/static/media/'

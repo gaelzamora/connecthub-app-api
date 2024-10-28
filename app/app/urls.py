@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/user/', include('accounts.urls')),
     path('api/posts/', include('posts.urls')),
     path('api/groups/', include('groups.urls')),
+    path('api/notifications/', include('notifications.urls')),
 ]
 
 if settings.DEBUG:
