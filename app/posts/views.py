@@ -8,7 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .serializers import PostSerializer
+from .serializers import PostSerializer, PostImageSerializer
 from core.models import Group, Post, Hashtag
 
 class PostViewSet(
@@ -28,6 +28,27 @@ class PostViewSet(
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+class UploadImageViewSet(APIView):
+    """Allow the authenticated user upload or send an image into post."""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None):
+        post = Post.objects.get(pk=pk)
+
+        serializer = PostSerializer(post, data=request.data, partial=True, context={'request': request})
+
+        print("-----------------")
+        print(post)
+        print(serializer)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LikeActionView(APIView):
     """Allow the authenticated user to like post."""

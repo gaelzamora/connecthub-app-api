@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 from core.models import Tag, WorkExperience, Project, Technologie
 
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -161,27 +162,17 @@ class UserImageSerializer(serializers.ModelSerializer):
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ['image']
 
-class AuthTokenSerializer(serializers.Serializer):
-    """Serializer for the user auth token."""
-    email = serializers.EmailField()
-    password = serializers.CharField(
-        style={'input_type': 'password'},
-        trim_whitespace=False,
-    )
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
 
-    def validate(self, attrs):
-        """Validate and authenticate the user."""
-        email = attrs.get('email')
-        password = attrs.get('password')
-        user = authenticate(
-            request=self.context.get('request'),
-            username=email,
-            password=password,
-        )
+        token['email'] = user.email
+        token['first_name'] = user.first_name 
+        token['is_staff'] = user.is_staff
+        token['projects'] = [project.id for project in user.projects.all()]
+        token['tags'] = [tag.id for tag in user.tags.all()]
+        token['follows'] = [follow.id for follow in user.follows.all()]
+        token['work_experiences'] = [work_experience.id for work_experience in user.work_experiences.all()]
 
-        if not user:
-            msg = _('Unable to authenticate with provided credentials.')
-            raise serializers.ValidationError(msg, code='authorization')
-        
-        attrs['user'] = user
-        return attrs
+        return token
