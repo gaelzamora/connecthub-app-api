@@ -20,6 +20,13 @@ def user_image_file_path(instance, filename):
 
     return os.path.join('uploads', 'user', filename)
 
+def post_image_file_path(intance, filename):
+    """Generate file path for new port image."""
+    ext = os.path.split(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'post', filename)
+
 class UserManager(BaseUserManager):
     """Manager for users."""
 
@@ -137,11 +144,12 @@ class Post(models.Model):
     posted = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     hashtags = models.ManyToManyField('HashTag', related_name='posts')
+    image = models.ImageField(null=True, upload_to=post_image_file_path)
     likes = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name='posts',
         blank=True
-    )
+    )   
 
     def get_content(self):
         return f'User {self.autor.get_full_name()} - [{self.content}]'

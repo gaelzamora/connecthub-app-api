@@ -15,32 +15,20 @@ from rest_framework.decorators import action
 from accounts import serializers
 
 from core.models import Tag, WorkExperience, Project, Technologie, User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserImageSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import MyTokenObtainPairSerializer
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
     serializer_class = serializers.UserSerializer
     permission_classes = [AllowAny]
 
-class CreateTokenView(ObtainAuthToken):
-    """Create a new auth token for user."""
-    serializer_class = serializers.AuthTokenSerializer
-    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
-
-class ManageUserView(generics.RetrieveUpdateAPIView):
-    """Manage the authentication user."""
-    serializer_class = serializers.UserSerializer
-    authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        """Retrieve and return the authenticated user."""
-        return self.request.user
+class LoginView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
     
-class UploadImageUser(viewsets.ModelViewSet):
+class UploadImageUserViewSet(APIView):
     """Upload image to unique user."""
-    serializer_class = serializers.UserSerializer
-    queryset = User.objects.all()
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -57,15 +45,15 @@ class UploadImageUser(viewsets.ModelViewSet):
         return self.serializer_class
     
 
-    @action(methods=['POST'], detail=True, url_path='upload_image')
-    def upload_image(self, request):
-        """Upload an image to user."""
-        print(request.user)
-        user = request.user
-        serializer = self.get_serializer(user, data=request.data)
+class UploadImageUserViewSet(APIView):
+    """Upload image to unique user."""
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-        print(serializer)
-        print("Holaaaaaaaaaaaaaaaa")
+    def post(self, request):
+        """Upload an image to user."""
+        user = request.user
+        serializer = UserImageSerializer(user, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()

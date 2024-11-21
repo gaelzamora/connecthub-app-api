@@ -23,7 +23,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'group', 'author', 'content', 
                   'posted', 'updated', 'likes', 'like_count', 
-                  'is_liked', 'hashtags']
+                  'is_liked', 'hashtags', 'image']
         read_only_fields = ['id', 'author']
 
     def get_like_count(self, obj):
@@ -50,3 +50,10 @@ class PostSerializer(serializers.ModelSerializer):
                 user=post.author
             )
             post.hashtags.add(obj)
+
+
+class PostImageSerializer(serializers.ModelSerializer):
+    """Serializer for uploading image to post."""
+
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ['image']

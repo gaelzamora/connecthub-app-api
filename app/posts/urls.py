@@ -17,5 +17,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('<int:pk>/like/', views.LikeActionView.as_view(), name='like_user'),
     path('post/<int:pk>/', views.GetPostView.as_view(), name='post_user'),
-    path('create_hashtag/<int:pk>/', views.CreateHashtagView.as_view(), name='hashtag_post')
+    path('create_hashtag/<int:pk>/', views.CreateHashtagView.as_view(), name='hashtag_post'),
+    path('upload_image/<int:pk>/', views.UploadImageViewSet.as_view(), name='upload_image')
 ]
