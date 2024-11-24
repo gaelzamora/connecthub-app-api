@@ -1,19 +1,16 @@
 """
 Views for the user API.
 """
-from rest_framework import status, generics, authentication, permissions, viewsets, mixins
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.settings import api_settings
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import status, generics, viewsets, mixins
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from . import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
-from rest_framework.decorators import action
-
+from rest_framework.decorators import permission_classes
 from accounts import serializers
-
 from core.models import Tag, WorkExperience, Project, Technologie, User
 from .serializers import UserSerializer, UserImageSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -26,11 +23,21 @@ class CreateUserView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-    
+
+class UserMe(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        try:
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
+        except Exception as e:
+                print("Error", str(e))
+
 class UploadImageUserViewSet(APIView):
     """Upload image to unique user."""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def get_queryset(self, request):
         """Retrieve user information for authenticated user."""    
@@ -39,7 +46,6 @@ class UploadImageUserViewSet(APIView):
     def get_serializer_class(self):
         """Return the serializer class for request."""
         if self.action == 'upload_image':
-            print("Entreeeeeeee")
             return serializers.UserImageSerializer
         
         return self.serializer_class
@@ -47,8 +53,7 @@ class UploadImageUserViewSet(APIView):
 
 class UploadImageUserViewSet(APIView):
     """Upload image to unique user."""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def post(self, request):
         """Upload an image to user."""
@@ -63,8 +68,7 @@ class UploadImageUserViewSet(APIView):
 
 class FollowUserView(APIView):
     """Allow the authenticated user to follow another user"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def post(self, request, pk=None):
         """Handle follow action"""
@@ -82,8 +86,7 @@ class FollowUserView(APIView):
 
 class UnfollowUserView(APIView):
     """Allow the authenticated user to unfollow another user"""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def post(self, request, pk=None):
         """Handle unfollow action"""
@@ -108,8 +111,7 @@ class TagViewSet(
     """Manage tags in the database."""
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def get_queryset(self):
         """Filter queryset to authenticated user."""
@@ -129,8 +131,7 @@ class WorkExperienceViewSet(
     """Manage work experiences in the database."""
     serializer_class = serializers.WorkExperienceSerializer
     queryset = WorkExperience.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def get_queryset(self):
         """Filter queryset to authenticated user."""
@@ -146,8 +147,7 @@ class ProjectViewSet(
     """Manage projects in the database."""
     serializer_class = serializers.ProjectSerializer
     queryset = Project.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def get_queryset(self):
         """Filter queryset to authenticated user."""
@@ -174,8 +174,7 @@ class TechnologieViewSet(
     """Manage technologies in the database."""
     serializer_class = serializers.TechnologieSerializer
     queryset = Technologie.objects.all()
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [SessionAuthentication]
 
     def get_queryset(self):
         """Filter queryset to authenticated user."""
@@ -186,8 +185,6 @@ class TechnologieViewSet(
 
 class SearchUserViewSet(APIView):
     """Allow the authenticated user can search to user."""
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         query = request.query_params.get('query')

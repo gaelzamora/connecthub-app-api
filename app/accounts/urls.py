@@ -17,6 +17,7 @@ app_name = 'accounts'
 
 urlpatterns = [
     path('create/', views.CreateUserView.as_view(), name='create'),
+    path('me/', views.UserMe.as_view()),
     path('login/', views.LoginView.as_view()),
     path('refresh/', TokenRefreshView.as_view()),
     path('<int:pk>/follow/', views.FollowUserView.as_view(), name='follow_user'),

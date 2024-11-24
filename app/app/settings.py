@@ -202,7 +202,8 @@ SIMPLE_JWT = {
 
     'ALGORITHM': 'HS256',
 
-    'VERIFYING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'SIGNING_KEY': SECRET_KEY,
     'AUDIENCE': None,
     'ISSUER': None,
     'JWK_URL': None,
@@ -223,6 +224,7 @@ SIMPLE_JWT = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
