@@ -24,16 +24,14 @@ class CreateUserView(generics.CreateAPIView):
 class LoginView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
-class UserMe(APIView):
-    permission_classes = [IsAuthenticated]
+class UserDetailView(APIView):
     authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        try:
-            serializer = UserSerializer(request.user)
-            return Response(serializer.data)
-        except Exception as e:
-                print("Error", str(e))
+        user = request.user
+        user_serializer = UserSerializer(user)
+        return Response(user_serializer.data)
 
 class UploadImageUserViewSet(APIView):
     """Upload image to unique user."""
@@ -53,7 +51,8 @@ class UploadImageUserViewSet(APIView):
 
 class UploadImageUserViewSet(APIView):
     """Upload image to unique user."""
-    permission_classes = [SessionAuthentication]
+    permission_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """Upload an image to user."""

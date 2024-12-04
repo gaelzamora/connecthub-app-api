@@ -167,11 +167,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['email'] = user.email
+        token['username'] = user.username
         token['first_name'] = user.first_name 
         token['is_staff'] = user.is_staff
         token['projects'] = [project.id for project in user.projects.all()]
         token['tags'] = [tag.id for tag in user.tags.all()]
         token['follows'] = [follow.id for follow in user.follows.all()]
         token['work_experiences'] = [work_experience.id for work_experience in user.work_experiences.all()]
+        token['image'] = str(user.image)
 
         return token

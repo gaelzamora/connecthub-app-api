@@ -52,6 +52,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
     email = models.EmailField(max_length=255, unique=True)
+    username = models.CharField(max_length=100, unique=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     tags = models.ManyToManyField('Tag', related_name='core_user')
@@ -67,6 +68,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
+    def save(self, *args, **kwargs):
+        if not self.username and self.email:
+            self.username = self.email.split('@')[0]
+        super().save(*args, **kwargs)
+        
     def get_full_name(self):
         return self.first_name + ' ' + self.last_name
     
